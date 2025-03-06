@@ -1,4 +1,7 @@
 # See https://help.github.com/articles/ignoring-files/ for more about ignoring files.
+src/data/numberbatch-en-19.08.txt.gz
+src/data/numberbatch-en-19.08.json
+
 
 # dependencies
 /node_modules
