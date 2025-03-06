@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-unused-vars */
 import { NextResponse } from "next/server";
 import path from "path";
 import fs from "fs/promises";
@@ -43,7 +44,7 @@ async function getDailyCount(): Promise<{ date: string; count: number }> {
   try {
     const content = await fs.readFile(countFilePath, "utf8");
     return JSON.parse(content);
-  } catch (_error) {
+  } catch (_error) { // eslint-disable-line @typescript-eslint/no-unused-vars
     const initial = { date: "", count: 0 };
     await fs.writeFile(countFilePath, JSON.stringify(initial), "utf8");
     return initial;
@@ -68,6 +69,7 @@ async function getAllEmbeddings(): Promise<{ word: string; vector: number[] }[]>
   return res.rows;
 }
 
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 export async function GET(_request: Request) {
   try {
     const today = getToday();
@@ -97,7 +99,7 @@ export async function GET(_request: Request) {
         targetFile: `${dailyCount}.txt`,
         rankingFile: `top1000_${dailyCount}.json`,
       });
-    } catch (_err) {
+    } catch (_err) { // eslint-disable-line @typescript-eslint/no-unused-vars
       // Files do not exist; continue.
     }
 
