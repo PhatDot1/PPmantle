@@ -56,7 +56,7 @@ export default function WordGuessingGame() {
     // Duplicate guess check: if the word has already been guessed, notify the user.
     if (guesses.some(item => item.word.toLowerCase() === guessLower)) {
       setFeedback({
-        message: "You&apos;ve already guessed that word",
+        message: "You have already guessed that word you stinky nerd",
         type: "info",
       })
       return
@@ -136,27 +136,27 @@ export default function WordGuessingGame() {
       // Provide feedback based on progressPercent.
       if (progressPercent >= 99) {
         setFeedback({
-          message: "You&apos;ve found the exact word!",
+          message: "You have found the exact word! 🤓 get a life",
           type: "success",
         })
       } else if (progressPercent > 90) {
         setFeedback({
-          message: "You&apos;re extremely close!",
+          message: "You are extremely close! 🗜🤏🔒😫",
           type: "success",
         })
       } else if (progressPercent > 70) {
         setFeedback({
-          message: "You&apos;re getting warmer!",
+          message: "You are getting warmer! 🔥",
           type: "success",
         })
       } else if (progressPercent > 40) {
         setFeedback({
-          message: "You&apos;re on the right track",
+          message: "You are on the right track 🛤️",
           type: "info",
         })
       } else {
         setFeedback({
-          message: "Try a different word",
+          message: "Try a different word dumbass",
           type: "info",
         })
       }
@@ -906,11 +906,11 @@ export default function WordGuessingGame() {
                   related words.
                 </p>
                 <p>
-                  <span className="font-semibold text-gray-700">2.</span> After each guess, you&apos;ll see a score showing
+                  <span className="font-semibold text-gray-700">2.</span> After each guess, you will see a score showing
                   how semantically close your word is to the target.
                 </p>
                 <p>
-                  <span className="font-semibold text-gray-700">3.</span> A score of 100% means you&apos;ve found the exact
+                  <span className="font-semibold text-gray-700">3.</span> A score of 0/1000 means you have found the exact
                   word!
                 </p>
                 <p>
