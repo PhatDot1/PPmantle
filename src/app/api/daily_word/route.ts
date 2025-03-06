@@ -4,10 +4,13 @@ import fs from "fs/promises";
 import { existsSync, mkdirSync } from "fs";
 import { Pool } from "pg";
 
-// Create a Postgres connection pool.
+// Create a Postgres connection pool using the certificate content from the environment variable.
 const pool = new Pool({
   connectionString: process.env.DATABASE_URL,
-  ssl: { rejectUnauthorized: false },
+  ssl: { 
+    rejectUnauthorized: false,
+    ca: process.env.SSL_ROOT_CERT_CONTENT,
+  },
 });
 
 // Compute cosine similarity between two numeric arrays.
@@ -40,7 +43,7 @@ async function getDailyCount(): Promise<{ date: string; count: number }> {
   try {
     const content = await fs.readFile(countFilePath, "utf8");
     return JSON.parse(content);
-  } catch (_error) { // eslint-disable-line @typescript-eslint/no-unused-vars
+  } catch (_error) {
     const initial = { date: "", count: 0 };
     await fs.writeFile(countFilePath, JSON.stringify(initial), "utf8");
     return initial;
@@ -65,7 +68,6 @@ async function getAllEmbeddings(): Promise<{ word: string; vector: number[] }[]>
   return res.rows;
 }
 
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
 export async function GET(_request: Request) {
   try {
     const today = getToday();
@@ -95,7 +97,7 @@ export async function GET(_request: Request) {
         targetFile: `${dailyCount}.txt`,
         rankingFile: `top1000_${dailyCount}.json`,
       });
-    } catch (_err) { // eslint-disable-line @typescript-eslint/no-unused-vars
+    } catch (_err) {
       // Files do not exist; continue.
     }
 

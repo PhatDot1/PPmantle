@@ -3,10 +3,13 @@ import { Pool } from "pg";
 import fs from "fs";
 import path from "path";
 
-// Create a connection pool using your DATABASE_URL from environment variables.
+// Create a connection pool using the certificate content from the environment variable.
 const pool = new Pool({
   connectionString: process.env.DATABASE_URL,
-  ssl: { rejectUnauthorized: false }
+  ssl: { 
+    rejectUnauthorized: false,
+    ca: process.env.SSL_ROOT_CERT_CONTENT,
+  },
 });
 
 // Utility: Get the daily target word and precomputed ranking.
