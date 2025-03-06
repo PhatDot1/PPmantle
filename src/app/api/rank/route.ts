@@ -3,12 +3,18 @@ import { Pool } from "pg";
 import fs from "fs";
 import path from "path";
 
-// Create a connection pool using the certificate content from the environment variable.
+// Compute the absolute path to your certificate file.
+// This assumes your certificate file is in [project_root]/certs/do-ca.crt
+const certFilePath = path.join(process.cwd(), "certs", "do-ca.crt");
+const caCert = fs.readFileSync(certFilePath, "utf8");
+
+// Create a connection pool using the certificate from the file system.
+// Your DATABASE_URL should now simply include sslmode=require.
 const pool = new Pool({
   connectionString: process.env.DATABASE_URL,
-  ssl: { 
-    rejectUnauthorized: false,
-    ca: process.env.SSL_ROOT_CERT_CONTENT,
+  ssl: {
+    rejectUnauthorized: true,
+    ca: caCert,
   },
 });
 
