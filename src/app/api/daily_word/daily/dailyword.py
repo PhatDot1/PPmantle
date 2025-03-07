@@ -8,6 +8,8 @@ import psycopg2
 from nltk.corpus import wordnet as wn
 from nltk.corpus import brown
 from dotenv import load_dotenv 
+from datetime import date  # New import for getting the current date
+
 load_dotenv()
 
 # Download necessary corpora if not already available.
@@ -129,6 +131,13 @@ with open(top_1000_filename, "w", encoding="utf8") as out_json:
 
 print(f"Target word '{target_word}' saved to {target_word_filename}.")
 print(f"Top 1000 similar words saved to {top_1000_filename}.")
+
+# Update dailyCount.json with the current date and the current count (n)
+daily_count = {"date": date.today().strftime("%Y-%m-%d"), "count": n}
+daily_count_filename = os.path.join(output_dir, "dailyCount.json")
+with open(daily_count_filename, "w", encoding="utf8") as dc_file:
+    json.dump(daily_count, dc_file)
+print(f"Daily count updated in {daily_count_filename} with: {daily_count}")
 
 # Close the database connection.
 cur.close()
