@@ -4,17 +4,21 @@ import json
 import math
 import random
 import nltk
+import psycopg2
 from nltk.corpus import wordnet as wn
 from nltk.corpus import brown
+from dotenv import load_dotenv 
+load_dotenv()
 
 # Download necessary corpora if not already available.
 nltk.download('wordnet')
 nltk.download('brown')
 
 def cosine_similarity(vecA, vecB):
-    dot_product = sum(a * b for a, b in zip(vecA, vecB))
-    normA = math.sqrt(sum(a * a for a in vecA))
-    normB = math.sqrt(sum(b * b for b in vecB))
+    # Convert each element to float to avoid mixing Decimal and float types.
+    dot_product = sum(float(a) * float(b) for a, b in zip(vecA, vecB))
+    normA = math.sqrt(sum(float(a) * float(a) for a in vecA))
+    normB = math.sqrt(sum(float(b) * float(b) for b in vecB))
     return dot_product / (normA * normB)
 
 # Build a set of single words from WordNet for nouns, verbs, and adjectives.
@@ -37,30 +41,34 @@ FREQ_THRESHOLD = 5  # You can experiment with this number.
 common_words = {word for word in wordnet_words if fdist[word] >= FREQ_THRESHOLD}
 
 print("Number of candidate words:", len(common_words))
-# If the number is not around 10,000, adjust FREQ_THRESHOLD accordingly.
-
 if not common_words:
     raise Exception("No common words found based on the frequency threshold.")
 
-# Load the full embeddings file.
-with open("numberbatch-en-19.08.json", "r", encoding="utf8") as f:
-    embeddings = json.load(f)
+# Connect to the PostgreSQL database.
+DATABASE_URL = os.environ.get("DATABASE_URL")
+if not DATABASE_URL:
+    raise Exception("DATABASE_URL environment variable not set.")
+# Adjust sslmode or add additional parameters as needed.
+conn = psycopg2.connect(DATABASE_URL, sslmode="require")
+cur = conn.cursor()
 
-# Ensure all keys are lowercase.
-embeddings = {k.lower(): v for k, v in embeddings.items()}
+def get_embedding(word):
+    """Fetch the embedding vector for a word from the database."""
+    cur.execute("SELECT vector FROM embeddings WHERE word = %s", (word.lower(),))
+    result = cur.fetchone()
+    if result is None:
+        return None
+    return result[0]
 
-# Helper function to check if a word is a noun, verb, or adjective and exists in the embeddings.
 def is_valid_target(word):
-    # Check if word is in embeddings.
-    if word not in embeddings:
+    """Return True if the word exists in the DB and has at least one noun, verb, or adjective synset."""
+    embedding = get_embedding(word)
+    if embedding is None:
         return False
-    # Check if there is at least one synset for the word with pos noun, verb, or adjective.
     synsets = wn.synsets(word)
-    if any(syn.pos() in [wn.NOUN, wn.VERB, wn.ADJ] for syn in synsets):
-        return True
-    return False
+    return any(syn.pos() in [wn.NOUN, wn.VERB, wn.ADJ] for syn in synsets)
 
-# Randomly select a target word from the filtered set that meets the criteria.
+# Randomly select a target word from common_words that meets the criteria.
 target_word = random.choice(list(common_words))
 attempts = 0
 while not is_valid_target(target_word):
@@ -68,23 +76,29 @@ while not is_valid_target(target_word):
     attempts += 1
     if attempts > 1000:
         raise ValueError("Could not find a valid target word after 1000 attempts.")
-print(f"Target word '{target_word}' is valid and found in embeddings.")
+print(f"Target word '{target_word}' is valid and found in the database.")
 
-target_vector = embeddings[target_word]
+target_embedding = get_embedding(target_word)
+if target_embedding is None:
+    raise ValueError("Target embedding could not be retrieved from the database.")
+
+# Retrieve all embeddings for single words (excluding words containing an underscore)
+cur.execute("SELECT word, vector FROM embeddings WHERE word NOT LIKE '%\\_%'")
+all_rows = cur.fetchall()
+
 ranking = []
-
-for word, vector in embeddings.items():
-    # Only consider single words (skip if the word has an underscore) and skip the target word.
-    if word == target_word or "_" in word:
+for word, vector in all_rows:
+    # Skip if the word is the target (case-insensitive check) or contains underscore.
+    if word.lower() == target_word or "_" in word:
         continue
-    similarity = cosine_similarity(target_vector, vector)
-    ranking.append({"word": word, "similarity": similarity})
+    similarity = cosine_similarity(target_embedding, vector)
+    ranking.append({"word": word.lower(), "similarity": similarity})
 
 # Sort in descending order by similarity and take the top 1000.
 ranking.sort(key=lambda x: x["similarity"], reverse=True)
 top_1000 = ranking[:1000]
 
-# Set output directory as the same directory as this script.
+# Determine output directory (same directory as this script).
 output_dir = os.path.dirname(os.path.abspath(__file__))
 
 # Determine the new index {n} by checking for existing files.
@@ -115,3 +129,7 @@ with open(top_1000_filename, "w", encoding="utf8") as out_json:
 
 print(f"Target word '{target_word}' saved to {target_word_filename}.")
 print(f"Top 1000 similar words saved to {top_1000_filename}.")
+
+# Close the database connection.
+cur.close()
+conn.close()
