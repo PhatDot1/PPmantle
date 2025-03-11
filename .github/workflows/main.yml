@@ -27,3 +27,19 @@ jobs:
         env:
           DATABASE_URL: ${{ secrets.DATABASE_URL }}
         run: python src/app/api/daily_word/daily/dailyword.py
+
+      - name: Configure Git
+        run: |
+          git config --global user.email "patrickloughran121@outlook.com"
+          git config --global user.name "Phatdot1"
+
+      - name: Commit changes
+        run: |
+          git add .
+          git commit -m "Daily word update" || echo "No changes to commit"
+
+      - name: Push changes
+        env:
+          PERSONAL_ACCESS_TOKEN: ${{ secrets.PERSONAL_ACCESS_TOKEN }}
+        run: |
+          git push https://$PERSONAL_ACCESS_TOKEN@github.com/${{ github.repository }} HEAD:main
