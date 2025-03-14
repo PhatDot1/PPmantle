@@ -36,8 +36,8 @@ for pos in [wn.NOUN, wn.VERB, wn.ADJ]:
 brown_words = [w.lower() for w in brown.words() if w.isalpha()]
 fdist = nltk.FreqDist(brown_words)
 
-# Set a frequency threshold (adjust this value to get ~10,000 candidate words)
-FREQ_THRESHOLD = 25  # You can experiment with this number.
+# Set a frequency threshold (adjust this value to get enough potential words but easy enough - maybe also parse word types to reduce this further)
+FREQ_THRESHOLD = 25 
 
 # Only keep words that appear at least FREQ_THRESHOLD times in Brown corpus.
 common_words = {word for word in wordnet_words if fdist[word] >= FREQ_THRESHOLD}
